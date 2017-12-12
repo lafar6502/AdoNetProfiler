@@ -12,6 +12,8 @@ namespace AdoNetProfiler
     /// </summary>
     public class AdoNetProfilerDbDataReader : DbDataReader
     {
+        public DateTime CreatedDate = DateTime.Now;
+
         private readonly DbDataReader _reader;
         private readonly IAdoNetProfiler _profiler;
         private int _records;
@@ -45,8 +47,9 @@ namespace AdoNetProfiler
         /// <returns>The value.</returns>
         public override object this[int ordinal] => _reader[ordinal];
         
-        internal AdoNetProfilerDbDataReader(DbDataReader reader, IAdoNetProfiler profiler)
+        internal AdoNetProfilerDbDataReader(DbDataReader reader, IAdoNetProfiler profiler, DateTime queryStart)
         {
+            CreatedDate = queryStart;
             if (reader == null)
             {
                 throw new ArgumentNullException(nameof(reader));

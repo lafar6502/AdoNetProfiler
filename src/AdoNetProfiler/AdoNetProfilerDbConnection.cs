@@ -4,6 +4,7 @@ using System.ComponentModel;
 #endif
 using System.Data;
 using System.Data.Common;
+using System.Threading;
 
 namespace AdoNetProfiler
 {
@@ -15,6 +16,9 @@ namespace AdoNetProfiler
 #endif
     public class AdoNetProfilerDbConnection : DbConnection
     {
+        public int CreatedByThreadId = Thread.CurrentThread.ManagedThreadId;
+        public DateTime CreatedDate = DateTime.Now;
+
         /// <inheritdoc cref="DbConnection.ConnectionString" />
         public override string ConnectionString
         {

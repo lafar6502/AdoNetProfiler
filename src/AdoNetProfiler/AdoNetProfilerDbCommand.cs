@@ -147,6 +147,7 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbCommand.ExecuteDbDataReader(CommandBehavior)" />
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
+            QueryStart = DateTime.Now;
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteReader(behavior);
@@ -156,9 +157,10 @@ namespace AdoNetProfiler
 
             try
             {
+                var sd = DateTime.Now;
                 var dbReader = WrappedCommand.ExecuteReader(behavior);
 
-                return new AdoNetProfilerDbDataReader(dbReader, _profiler);
+                return new AdoNetProfilerDbDataReader(dbReader, _profiler, sd);
             }
             catch (Exception ex)
             {
@@ -168,9 +170,12 @@ namespace AdoNetProfiler
             }
         }
 
+        public DateTime QueryStart { get; set; }
+
         /// <inheritdoc cref="DbCommand.ExecuteNonQuery()" />
         public override int ExecuteNonQuery()
         {
+            QueryStart = DateTime.Now;
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteNonQuery();
@@ -201,6 +206,7 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbCommand.ExecuteScalar()" />
         public override object ExecuteScalar()
         {
+            QueryStart = DateTime.Now;
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteScalar();
