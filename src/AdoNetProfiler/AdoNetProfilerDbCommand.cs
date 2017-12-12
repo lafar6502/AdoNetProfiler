@@ -160,7 +160,9 @@ namespace AdoNetProfiler
                 var sd = DateTime.Now;
                 var dbReader = WrappedCommand.ExecuteReader(behavior);
 
-                return new AdoNetProfilerDbDataReader(dbReader, _profiler, sd);
+                var dr = new  AdoNetProfilerDbDataReader(dbReader, _profiler, sd);
+                dr.Command = this;
+                return dr;
             }
             catch (Exception ex)
             {
@@ -207,6 +209,7 @@ namespace AdoNetProfiler
         public override object ExecuteScalar()
         {
             QueryStart = DateTime.Now;
+            
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteScalar();

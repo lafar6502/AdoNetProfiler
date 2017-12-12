@@ -12,6 +12,7 @@ namespace AdoNetProfiler
     /// </summary>
     public class AdoNetProfilerDbDataReader : DbDataReader
     {
+        public AdoNetProfilerDbCommand Command { get; set; }
         public DateTime CreatedDate = DateTime.Now;
 
         private readonly DbDataReader _reader;

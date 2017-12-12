@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
+using System.Configuration;
 
 namespace AdoNetProfiler
 {
@@ -18,6 +19,7 @@ namespace AdoNetProfiler
     {
         public int CreatedByThreadId = Thread.CurrentThread.ManagedThreadId;
         public DateTime CreatedDate = DateTime.Now;
+        public int TotalQueries = 0;
 
         /// <inheritdoc cref="DbConnection.ConnectionString" />
         public override string ConnectionString
@@ -50,6 +52,18 @@ namespace AdoNetProfiler
         /// The instance of <see cref="IAdoNetProfiler"/> used internally.
         /// </summary>
         public IAdoNetProfiler Profiler { get; private set; }
+
+        public AdoNetProfilerDbConnection(string cs) 
+        {
+            var c0 = ConfigurationManager.ConnectionStrings[cs];
+            var fact = c0 == null ? "System.Data.SqlClient" : c0.ProviderName ?? "System.Data.SqlClient";
+            var dbf = DbProviderFactories.GetFactory(fact);
+            var cn = dbf.CreateConnection();
+            cn.ConnectionString = c0 == null ? cs : c0.ConnectionString;
+            WrappedConnection = cn;
+            Profiler = AdoNetProfilerFactory.GetProfiler();
+            WrappedConnection.StateChange += StateChangeHandler;
+        }
 
 #if !COREFX        
         /// <summary>
