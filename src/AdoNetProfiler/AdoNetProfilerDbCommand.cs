@@ -264,7 +264,9 @@ namespace AdoNetProfiler
 
         private Func<DbCommand, bool> GetBindByNameGetAction(Type commandType)
         {
-            if (_bindByNameGetCache[commandType] is Func<DbCommand, bool> cache)
+            Func<DbCommand, bool> cache = _bindByNameGetCache[commandType] as Func<DbCommand, bool>;
+
+            if (cache != null)
             {
                 return cache;
             }
@@ -300,7 +302,8 @@ namespace AdoNetProfiler
 
         private Action<DbCommand, bool> GetBindByNameSetAction(Type commandType)
         {
-            if (_bindByNameSetCache[commandType] is Action<DbCommand, bool> cache)
+            Action<DbCommand, bool> cache = _bindByNameSetCache[commandType] as Action<DbCommand, bool>;
+            if (cache != null)
             {
                 return cache;
             }
