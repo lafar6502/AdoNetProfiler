@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Configuration;
+using System.Threading.Tasks;
 
 namespace AdoNetProfiler
 {
@@ -97,6 +98,14 @@ namespace AdoNetProfiler
         {
             WrappedConnection.ChangeDatabase(databaseName);
         }
+
+
+        public override void EnlistTransaction(System.Transactions.Transaction t)
+        {
+            WrappedConnection.EnlistTransaction(t);
+        }
+
+        
 
         /// <inheritdoc cref="DbConnection.Close()" />
         public override void Close()

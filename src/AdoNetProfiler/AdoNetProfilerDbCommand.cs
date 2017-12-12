@@ -148,6 +148,9 @@ namespace AdoNetProfiler
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             QueryStart = DateTime.Now;
+            var cn = Connection as AdoNetProfilerDbConnection;
+            if (cn != null) cn.TotalQueries++;
+
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteReader(behavior);
@@ -178,6 +181,9 @@ namespace AdoNetProfiler
         public override int ExecuteNonQuery()
         {
             QueryStart = DateTime.Now;
+            var cn = Connection as AdoNetProfilerDbConnection;
+            if (cn != null) cn.TotalQueries++;
+
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteNonQuery();
@@ -209,7 +215,9 @@ namespace AdoNetProfiler
         public override object ExecuteScalar()
         {
             QueryStart = DateTime.Now;
-            
+            var cn = Connection as AdoNetProfilerDbConnection;
+            if (cn != null) cn.TotalQueries++;
+
             if (_profiler == null || !_profiler.IsEnabled)
             {
                 return WrappedCommand.ExecuteScalar();
