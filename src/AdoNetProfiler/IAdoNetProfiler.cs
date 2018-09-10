@@ -118,5 +118,11 @@ namespace AdoNetProfiler
         /// <param name="command">The executing command.</param>
         /// <param name="exception">The occurred error.</param>
         void OnCommandError(DbCommand command, Exception exception);
+
+        /// <summary>
+        /// general purpose error report
+        /// </summary>
+        /// <param name="error"></param>
+        void OnError(string error);
     }
 }

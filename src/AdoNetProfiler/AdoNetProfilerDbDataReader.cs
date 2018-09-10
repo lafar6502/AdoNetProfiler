@@ -4,6 +4,7 @@ using System.Collections;
 using System.Data;
 #endif
 using System.Data.Common;
+using System.Configuration;
 
 namespace AdoNetProfiler
 {
@@ -12,12 +13,24 @@ namespace AdoNetProfiler
     /// </summary>
     public class AdoNetProfilerDbDataReader : DbDataReader
     {
+
         public AdoNetProfilerDbCommand Command { get; set; }
         public DateTime CreatedDate = DateTime.Now;
 
         private readonly DbDataReader _reader;
         private readonly IAdoNetProfiler _profiler;
         private int _records;
+        private bool _firstRead = false;
+        private bool _firstReadResult = false;
+
+        private bool EagerFirstRead
+        {
+            get
+            {
+                var x = ConfigurationManager.AppSettings["AdoNetProfiler.EagerFirstRead"];
+                return "1".Equals(x) || "true".Equals(x);
+            }
+        }
 
         /// <inheritdoc cref="DbDataReader.Depth" />
         public override int Depth => _reader.Depth;
@@ -58,6 +71,13 @@ namespace AdoNetProfiler
 
             _reader   = reader;
             _profiler = profiler;
+            _firstRead = false;
+            if (EagerFirstRead)
+            {
+                _firstReadResult = _reader.Read();
+                _firstRead = true;
+                if (_firstReadResult) _records++;
+            }
         }
 
 #if !NETSTANDARD1_6
@@ -217,6 +237,12 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbDataReader.Read()" />
         public override bool Read()
         {
+            if (_firstRead)
+            {
+                _firstRead = false;
+                return _firstReadResult;
+            }
+
             var result = _reader.Read();
 
             if (result)

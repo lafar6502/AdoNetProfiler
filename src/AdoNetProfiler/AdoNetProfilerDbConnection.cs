@@ -21,12 +21,43 @@ namespace AdoNetProfiler
         public int CreatedByThreadId = Thread.CurrentThread.ManagedThreadId;
         public DateTime CreatedDate = DateTime.Now;
         public int TotalQueries = 0;
+        private bool _disposed = false;
 
         /// <inheritdoc cref="DbConnection.ConnectionString" />
         public override string ConnectionString
         {
-            get { return WrappedConnection.ConnectionString; }
-            set { WrappedConnection.ConnectionString = value; }
+            get
+            {
+                EnsureNotDisposed();
+                return WrappedConnection.ConnectionString;
+            }
+            set
+            {
+                EnsureNotDisposed();
+                WrappedConnection.ConnectionString = value;
+            }
+        }
+
+        internal static bool ThrowOnErrors
+        {
+            get
+            {
+                var v = ConfigurationManager.AppSettings["AdoNetProfiler.ThrowOnError"];
+                return "1".Equals(v) || "true".Equals(v, StringComparison.InvariantCultureIgnoreCase);
+            }
+        }
+
+        private void EnsureNotDisposed()
+        {
+            if (_disposed)
+            {
+                Profiler.OnError("Connection already disposed");
+                var v = ConfigurationManager.AppSettings["AdoNetProfiler.ThrowOnError"];
+                if (ThrowOnErrors)
+                {
+                    throw new Exception("Connection already disposed");
+                }
+            }
         }
 
         /// <inheritdoc cref="DbConnection.ConnectionTimeout" />
@@ -96,12 +127,14 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbConnection.ChangeDatabase(string)" />
         public override void ChangeDatabase(string databaseName)
         {
+            EnsureNotDisposed();
             WrappedConnection.ChangeDatabase(databaseName);
         }
 
 
         public override void EnlistTransaction(System.Transactions.Transaction t)
         {
+            EnsureNotDisposed();
             WrappedConnection.EnlistTransaction(t);
         }
 
@@ -110,6 +143,7 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbConnection.Close()" />
         public override void Close()
         {
+            EnsureNotDisposed();
             if (Profiler == null || !Profiler.IsEnabled)
             {
                 WrappedConnection.Close();
@@ -128,18 +162,21 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbConnection.GetSchema()" />
         public override DataTable GetSchema()
         {
+            EnsureNotDisposed();
             return WrappedConnection.GetSchema();
         }
         
         /// <inheritdoc cref="DbConnection.GetSchema(string)" />
         public override DataTable GetSchema(string collectionName)
         {
+            EnsureNotDisposed();
             return WrappedConnection.GetSchema(collectionName);
         }
         
         /// <inheritdoc cref="DbConnection.GetSchema(string, string[])" />
         public override DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
+            EnsureNotDisposed();
             return WrappedConnection.GetSchema(collectionName, restrictionValues);
         }
 #endif
@@ -147,6 +184,7 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbConnection.Open()" />
         public override void Open()
         {
+            EnsureNotDisposed();
             if (Profiler == null || !Profiler.IsEnabled)
             {
                 WrappedConnection.Open();
@@ -164,6 +202,7 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbConnection.BeginDbTransaction(IsolationLevel)" />
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
+            EnsureNotDisposed();
             if (Profiler == null || !Profiler.IsEnabled)
             {
                 return WrappedConnection.BeginTransaction(isolationLevel);
@@ -181,6 +220,7 @@ namespace AdoNetProfiler
         /// <inheritdoc cref="DbConnection.CreateDbCommand()" />
         protected override DbCommand CreateDbCommand()
         {
+            EnsureNotDisposed();
             return new AdoNetProfilerDbCommand(WrappedConnection.CreateCommand(), this, Profiler);
         }
 
@@ -190,6 +230,11 @@ namespace AdoNetProfiler
         /// <param name="disposing">Wether to free, release, or resetting unmanaged resources or not.</param>
         protected override void Dispose(bool disposing)
         {
+            if (_disposed)
+            {
+                Profiler.OnError("Connection already disposed!");
+            }
+
             if (disposing && WrappedConnection != null)
             {
                 if (State != ConnectionState.Closed)
@@ -200,7 +245,7 @@ namespace AdoNetProfiler
                 WrappedConnection.StateChange -= StateChangeHandler;
                 WrappedConnection.Dispose();
             }
-
+            _disposed = true;
             WrappedConnection = null;
             Profiler          = null;
 
@@ -210,9 +255,10 @@ namespace AdoNetProfiler
 #endif
         }
 
-        private void StateChangeHandler(object sender, StateChangeEventArgs stateChangeEventArguments)
+        private void StateChangeHandler(object sender, StateChangeEventArgs a)
         {
-            OnStateChange(stateChangeEventArguments);
+            
+            OnStateChange(a);
         }
     }
 }
